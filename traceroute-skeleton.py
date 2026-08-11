@@ -49,23 +49,22 @@ def build_packet():
 # So the function ending should look like this
 
 # Header is type (8), code (8), checksum (16), sequence (16)
-	myChecksum = 0
+    myChecksum = 0
     myID = os.getpid() & 0xFFFF
 	# Make a dummy header with a 0 checksum
-	header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, myID, 1)
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, myID, 1)
     data = struct.pack("d", time.time())
 	# Calculate  checksum on the data and the dummy header.
-	myChecksum = checksum(header + data)
+    myChecksum = checksum(header + data)
 	
 	# Get right checksum and put in header
-	if sys.platform == 'darwin':
-		myChecksum = htons(myChecksum) & 0xffff		
-	else:
-		myChecksum = htons(myChecksum)
-		
-	header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum,myID, 1)
-	packet = header + data
-	return packet
+    if sys.platform == 'darwin':
+        myChecksum = htons(myChecksum) & 0xffff		
+    else:
+        myChecksum = htons(myChecksum)
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum,myID, 1)
+    packet = header + data
+    return packet
     
 
 def get_route(hostname):
@@ -76,8 +75,8 @@ def get_route(hostname):
             #Fill in start
             # Make a raw socket named mySocket
             mySocket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
-			mySocket.settimeout(TIMEOUT)
-			mySocket.bind(("", 0))
+            mySocket.settimeout(TIMEOUT)
+            mySocket.bind(("", 0))
             #Fill in end
             mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', ttl))
             mySocket.settimeout(TIMEOUT)
@@ -106,27 +105,27 @@ def get_route(hostname):
                 #Fetch the icmp type from the IP packet
                 types, code = recvPacket[20:22]
                 #Fill in end
-                    if types == 11:
-                        bytes = struct.calcsize("d")
-                        timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
+                if types == 11:
+                    bytes = struct.calcsize("d")
+                    timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     print(" %d rtt=%.0f ms %s" %(ttl, (timeReceived -t)*1000, addr[0]))
 
-                    elif types == 3:
-                        bytes = struct.calcsize("d")
-                        timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
-                        print(" %d rtt=%.0f ms %s" %(ttl, (timeReceived-t)*1000, addr[0]))
+                elif types == 3:
+                    bytes = struct.calcsize("d")
+                    timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
+                    print(" %d rtt=%.0f ms %s" %(ttl, (timeReceived-t)*1000, addr[0]))
                     
-                    elif types == 0:
+                elif types == 0:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     print(" %d rtt=%.0f ms %s" %(ttl, (timeReceived - timeSent)*1000, addr[0]))
 
                     return
                     
-                    else:
-                        print("error")
+                else:
+                    print("error")
 
-                    break
+                break
 
             finally:
                 mySocket.close()

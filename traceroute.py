@@ -117,14 +117,14 @@ def get_route(hostname):
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     print(" %d rtt=%.0f ms %s" %(ttl, (timeReceived-t)*1000, addr[0]))
-                    return
+                    return False
 
                 elif types == 0:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     print(" %d rtt=%.0f ms %s" %(ttl, (timeReceived - timeSent)*1000, addr[0]))
 
-                    return
+                    return True
                     
                 else:
                     print("error")
@@ -135,4 +135,8 @@ def get_route(hostname):
                 mySocket.close()
 
 if __name__ == "__main__":
-    get_route(sys.argv[1])
+    reached = get_route(sys.argv[1])
+    if reached:
+        print("Trace complete.")
+    else:
+        print("Trace ended: destination not reached (unreachable or max hops exceeded).")

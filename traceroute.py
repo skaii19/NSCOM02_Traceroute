@@ -4,6 +4,7 @@ import sys
 import struct
 import time
 import select
+import requests
 import binascii
 
 ICMP_ECHO_REQUEST = 8
@@ -65,7 +66,61 @@ def build_packet():
     header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum,myID, 1)
     packet = header + data
     return packet
-    
+
+# -- BONUS --
+
+GEO_REQ_COUNT = 0
+GEO_WINDOW_START = time.time()
+
+def query_geo(ip):
+    global GEO_REQ_COUNT, GEO_WINDOW_START
+    now = time.time()
+
+    # reset window every 60s
+    if now - GEO_WINDOW_START >= 60:
+        GEO_WINDOW_START = now
+        GEO_REQ_COUNT = 0
+
+    # throttle if limit reached
+    if GEO_REQ_COUNT >= 45:
+        sleep_for = 60 - (now - GEO_WINDOW_START) + 0.1
+        time.sleep(sleep_for)
+        GEO_WINDOW_START = time.time()
+        GEO_REQ_COUNT = 0
+
+    try:
+        url = f"http://ip-api.com/json/{ip}?fields=status,city,regionName,country,org,message"
+        resp = requests.get(url, timeout=5)
+        GEO_REQ_COUNT += 1
+        data = resp.json()
+        if data.get("status") == "success":
+            return {
+                "city": data.get("city"),
+                "region": data.get("regionName"),
+                "country": data.get("country"),
+                "org": data.get("org")
+            }
+        
+    except Exception:
+        pass
+    return None 
+
+def format_geo(geo):
+    if not geo:
+        return ""
+    parts = []
+    if geo.get("city"):
+        parts.append(geo.get("city"))
+    if geo.get("region"):
+        parts.append(geo.get("region"))
+    if geo.get("country"):
+        parts.append(geo.get("country"))
+    geo_str = ""
+    if parts:
+        geo_str += f" [{', '.join(parts)}]"
+    if geo.get("org"):
+        geo_str += f" {geo.get('org')}"
+    return geo_str
 
 def get_route(hostname):
     timeLeft = TIMEOUT
@@ -111,18 +166,21 @@ def get_route(hostname):
                 if types == 11:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
-                    print(" %d rtt=%.0f ms %s" %(ttl, (timeReceived -t)*1000, addr[0]))
+                    geo = query_geo(addr[0])
+                    print(f" {ttl} rtt={(timeReceived - t)*1000:.0f} ms {addr[0]}\n{format_geo(geo)}")
 
                 elif types == 3:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
-                    print(" %d rtt=%.0f ms %s" %(ttl, (timeReceived-t)*1000, addr[0]))
+                    geo = query_geo(addr[0])
+                    print(f" {ttl} rtt={(timeReceived - t)*1000:.0f} ms {addr[0]}\n{format_geo(geo)}")
                     return False
 
                 elif types == 0:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
-                    print(" %d rtt=%.0f ms %s" %(ttl, (timeReceived - timeSent)*1000, addr[0]))
+                    geo = query_geo(addr[0])
+                    print(f" {ttl} rtt={(timeReceived - timeSent)*1000:.0f} ms {addr[0]}\n{format_geo(geo)}")
 
                     return True
                     

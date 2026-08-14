@@ -144,18 +144,18 @@ def get_route(hostname):
                 howLongInSelect = (time.time() - startedSelect)
                 
                 if whatReady[0] == []: # Timeout
-                    print(" * * * Request timed out.")
+                    print(f" {ttl}  * * * Request timed out.")
                     continue
                 recvPacket, addr = mySocket.recvfrom(1024)
                 timeReceived = time.time()
                 timeLeft = timeLeft - howLongInSelect
 
                 if timeLeft <= 0:
-                    print(" * * * Request timed out.")
+                    print(f" {ttl}  * * * Request timed out.")
                     continue
 
             except timeout:
-                print(" * * * Request timed out.")
+                print(f" {ttl}  * * * Request timed out.")
                 continue
 
             else:
@@ -167,20 +167,20 @@ def get_route(hostname):
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     geo = query_geo(addr[0])
-                    print(f" {ttl} rtt={(timeReceived - t)*1000:.0f} ms {addr[0]}\n{format_geo(geo)}")
+                    print(f" {ttl}  rtt={(timeReceived - t)*1000:.0f} ms {addr[0]}\n{format_geo(geo)}")
 
                 elif types == 3:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     geo = query_geo(addr[0])
-                    print(f" {ttl} rtt={(timeReceived - t)*1000:.0f} ms {addr[0]}\n{format_geo(geo)}")
+                    print(f" {ttl}  rtt={(timeReceived - t)*1000:.0f} ms {addr[0]}\n{format_geo(geo)}")
                     return False
 
                 elif types == 0:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     geo = query_geo(addr[0])
-                    print(f" {ttl} rtt={(timeReceived - timeSent)*1000:.0f} ms {addr[0]}\n{format_geo(geo)}")
+                    print(f" {ttl}  rtt={(timeReceived - timeSent)*1000:.0f} ms {addr[0]}\n{format_geo(geo)}")
 
                     return True
                     
